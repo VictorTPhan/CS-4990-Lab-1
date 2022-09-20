@@ -33,23 +33,7 @@ class Boid
     this.max_rotational_acceleration = rotational_acceleration;
   }
 
-  float targetRadian;
-  float startingRadian;    
-  
-  float halfwayCheckPoint;
-  float stoppingPoint;
-  float correctingPoint;
-  float correctingPoint2;
-  
-  float halfwayRadian;
-  float stoppingRadian;
-  float correctingRadian;
-  float correctingRadian2;
-  
-  float amountToRotate;
-  boolean clockwise;
-  boolean turnComplete;
-  String rotationState;
+  //another helper function because i can't remember trigonometry that well
   void drawAngledLine(float radian, String tag)
   {
     int lineLength = 200;
@@ -60,75 +44,53 @@ class Boid
     text(tag + " " + radian, kinematic.position.x + x1, kinematic.position.y + y1);
   }
 
+  //helper function because i do not like writing this over and over --Victor
+  int signOf(float n)
+  {
+    return (n > 0)? 1: -1;
+  }
+
   void update(float dt)
   {
     text(kinematic.getHeading(), kinematic.position.x, kinematic.position.y + 20);
     
     if (target != null)
-    {
-      drawAngledLine(targetRadian, "end position");
-      drawAngledLine(startingRadian, "start position");
-      drawAngledLine(halfwayRadian, "midway point");
-      drawAngledLine(stoppingRadian, "stopping point");
-      drawAngledLine(correctingRadian, "correcting point");
-      drawAngledLine(correctingRadian2, "rebound point");
+    { 
+      circle(target.x, target.y, 10);
       
-      float rotation = amountToRotate / PI;
-      if (!clockwise) rotation *= -1;
-      rotation *= max_acceleration;
+      //grab direction of target
+      float targetRadian = atan2(target.y - kinematic.position.y, target.x - kinematic.position.x);
       
-      //decceleration
-      float distanceSoFar = kinematic.getHeading() - startingRadian;
-      float counter = TWO_PI - distanceSoFar;
-      if (counter < abs(distanceSoFar)) distanceSoFar = counter;
-      rotationState = "accelerating";
+      //find the shortest radian distance between target and you (that way you don't do a giant rotation and mess up your speed)
+      //this value is between -pi and pi
+      float shortestRadianDistance = min(targetRadian - normalize_angle_left_right(kinematic.getHeading()), TWO_PI - targetRadian - normalize_angle_left_right(kinematic.getHeading()));
+      boolean clockwise = shortestRadianDistance >= 0;
       
-      if (abs(distanceSoFar) > abs(halfwayCheckPoint)) {
-        rotation *= -max_acceleration;
-        rotationState = "deccelerating";
-      }
+      float rotation = shortestRadianDistance/PI * max_rotational_acceleration;
       
-      if (abs(distanceSoFar) > abs(stoppingPoint)) {
-        turnComplete = true;
-        rotation = 0;
-        rotationState = "finished";
-      }
+      //first expression is self explanatory, second expressed will determine the slowdown marker
+      //given acceleration, a destination angle, and a radian distance to a destination angle, you could calculate the radian angle at which you ought to slow down
+      //therefore, if you're going too fast towards a target, we'll check if you've crossed this threshold yet. 
+      //if you've crossed it, slow down.
+      boolean clockwiseAndApproaching = clockwise && kinematic.getHeading() > targetRadian - kinematic.rotational_velocity;
+      boolean counterClockwiseAndApproaching = !clockwise && normalize_angle_left_right(kinematic.getHeading()) < targetRadian - kinematic.rotational_velocity;
       
-      if (turnComplete)
+      if (clockwiseAndApproaching || counterClockwiseAndApproaching)
       {
-        if (clockwise) {
-          if (kinematic.getHeading() > correctingRadian) {
-            rotation = -0.2;
-            rotationState = "correcting";
-          }
-          else if (kinematic.rotational_velocity < 0 && kinematic.getHeading() < correctingRadian2) {
-            rotation = 0.2;
-            rotationState = "correcting back";
-          }
-        }
-        else {
-          if (kinematic.getHeading() < correctingRadian) {
-            rotation = 0.2;
-            rotationState = "correcting";
-          }
-          else if (kinematic.rotational_velocity > 0 && kinematic.getHeading() > correctingRadian2) {
-            rotation = -0.2;
-            rotationState = "correcting back";
-          }
-        }
+         rotation = max_rotational_acceleration * signOf(rotation) * -1;
       }
-
-      //2 parameters: positional velocity and rotational velocity
-      kinematic.increaseSpeed(0 * dt, rotation * dt);
-      //kinematic.increaseSpeed(0 * dt, 0 * dt);
-
-      text("Going clockwise: " + clockwise, kinematic.position.x + 50, kinematic.position.y + 15);
-      text("Rotational Velocity: " + kinematic.rotational_velocity, kinematic.position.x + 50, kinematic.position.y + 30);
-      text("Acceleration this frame: " + rotation, kinematic.position.x + 50, kinematic.position.y + 60);
-      text("Amount to rotate: " + amountToRotate, kinematic.position.x + 50, kinematic.position.y + 45);
-      text("Distance so far: " + distanceSoFar, kinematic.position.x + 50, kinematic.position.y + 105);
-      text("% Distance: " + distanceSoFar/amountToRotate * 100, kinematic.position.x + 50, kinematic.position.y + 75);
-      text("Rotation State: " + rotationState, kinematic.position.x + 50, kinematic.position.y + 90);
+      
+      drawAngledLine(kinematic.getHeading(),  "heading");
+      drawAngledLine(targetRadian, "target angle");
+      //drawAngledLine(targetRadian + kinematic.rotational_velocity, "stop here for clockwise");
+      //drawAngledLine(targetRadian - kinematic.rotational_velocity, "stop here for counter clockwise");
+      
+      text("Shortest Radian Distance: " + shortestRadianDistance + TWO_PI, kinematic.position.x + 50, kinematic.position.y + 20);
+      text("Rotational Velocity: " + kinematic.rotational_velocity, kinematic.position.x + 50, kinematic.position.y + 35);
+      text("Rotation: " + rotation, kinematic.position.x + 50, kinematic.position.y + 50);
+      text("Clockwise: " + clockwise, kinematic.position.x + 50, kinematic.position.y + 65);
+      
+      kinematic.increaseSpeed(max_acceleration * dt, rotation * dt);
     }
 
     //go 3 times faster and rotate 100000 times faster
@@ -179,52 +141,6 @@ class Boid
   void seek(PVector target)
   {
     this.target = target;
-    
-    turnComplete = false;
-    startingRadian = kinematic.heading;
-    
-    targetRadian = atan2(kinematic.position.y - target.y, kinematic.position.x - target.x) + PI;
-    amountToRotate = targetRadian - startingRadian;
-    println("amount to rotate: " + amountToRotate);
-
-    float counter = TWO_PI - abs(amountToRotate);
-    println("counter: " + counter);
-    
-    clockwise = targetRadian > kinematic.getHeading();
-    if (counter < abs(amountToRotate)) {
-      amountToRotate = counter;
-      clockwise = !clockwise;
-    }
-    
-    println("clockwise: " + clockwise);
-        
-    amountToRotate = abs(amountToRotate);
-    println("final amount to rotate: " + amountToRotate);
-    
-    float halfWayMultiplier = 0.47;
-    float stoppingPointMultiplier = 0.93;
-    float correctingPointMultiplier = 1.02;
-    
-    halfwayCheckPoint = amountToRotate * halfWayMultiplier;
-    stoppingPoint = amountToRotate * stoppingPointMultiplier;
-    correctingPoint = amountToRotate * correctingPointMultiplier;
-    correctingPoint2 = amountToRotate * (correctingPointMultiplier - 1);
-    println("halfway amount to rotate: " + halfwayCheckPoint);
-    println("stopping amount to rotate: " + stoppingPoint);
-    println("correcting point: " + correctingPoint);
-    
-    if (clockwise) {
-      halfwayRadian = normalize_angle(startingRadian + halfwayCheckPoint);
-      stoppingRadian = normalize_angle(startingRadian + stoppingPoint);
-      correctingRadian = normalize_angle(startingRadian + correctingPoint);
-      correctingRadian2 = normalize_angle(targetRadian - (amountToRotate * (correctingPointMultiplier - 1)));
-    }
-    else {
-      halfwayRadian = normalize_angle(targetRadian + (amountToRotate * (1-halfWayMultiplier)));
-      stoppingRadian = normalize_angle(targetRadian + (amountToRotate * (1-stoppingPointMultiplier)));
-      correctingRadian = normalize_angle(targetRadian - (amountToRotate * (correctingPointMultiplier - 1)));
-      correctingRadian2 = normalize_angle(targetRadian + (amountToRotate * (correctingPointMultiplier - 1)));
-    }
   }
 
   void follow(ArrayList<PVector> waypoints)
