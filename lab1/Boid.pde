@@ -94,17 +94,18 @@ class Boid
       text("originPos: " + originPos, kinematic.position.x + 50, kinematic.position.y + 110);
       text("finish: " + finish, kinematic.position.x + 50, kinematic.position.y + 125);
       
+      originPos = sqrt(pow(target.x - origin.x, 2) + pow(target.y - origin.y, 2));
       boidPos = sqrt(pow(target.x - kinematic.position.x, 2) + pow(target.y - kinematic.position.y, 2)); //distance formula applied
-      finish = boidPos / originPos; 
+      finish = boidPos / originPos;  //closer it is to 0, the closer the boid is to the target
       speed = max_acceleration * dt;
-      if (finish <= 0.5) {
+      if (finish >= 0.5) {
         kinematic.increaseSpeed(speed * 5, rotation * dt); //supposed to speed up in the beginning
       }
-      else if (finish > 0.5 && finish <= 0.9){
+      else if (finish < 0.5 && finish >= 0.9){
         kinematic.increaseSpeed(speed * -.25f, rotation * dt); //supposed to slow down a bit after reaching the halfway point
       }
       else {
-        kinematic.increaseSpeed(speed * -3f, rotation * dt);  //supposed to slow down a lot when it's pretty close
+        kinematic.increaseSpeed(speed * -5f, rotation * dt);  //supposed to slow down a lot when it's pretty close
       }
       
       //kinematic.increaseSpeed(max_acceleration * dt, rotation * dt);
@@ -128,18 +129,12 @@ class Boid
     draw();
   }
   
-  float originPos = sqrt(pow(target.x - kinematic.position.x, 2) + pow(target.y - kinematic.position.y, 2));; //keeps track of the original position
+  PVector origin;
+  float originPos; //keeps track of the original position
   float boidPos;  //keeps track of boid's current position
   float finish;  //keeps a percentage of how far the boid has traveled on its path to the target
   float speed;  // contains "max_acceleration * dt", mainly for brevity
-  boolean targetSet = false;  //checks if a target has been placed yet to avoid null pointer errors. It's in the seek method.
   
-  // I get a syntax error here for it being an incomplete statement or having extra code but I can't figure why it says it
-  if (targetSet == true) {
-    originPos = sqrt(pow(target.x - kinematic.position.x, 2) + pow(target.y - kinematic.position.y, 2));
-  }
-  
-
   void draw()
   {
     for (Crumb c : this.crumbs)
@@ -169,8 +164,8 @@ class Boid
 
   void seek(PVector target)
   {
-    targetSet = true;
     this.target = target;
+    origin = kinematic.position;
   }
 
   void follow(ArrayList<PVector> waypoints)
