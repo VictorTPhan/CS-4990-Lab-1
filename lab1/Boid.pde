@@ -49,7 +49,7 @@ class Boid
   {
     return (n > 0)? 1: -1;
   }
-
+  
   void update(float dt)
   {
     text(kinematic.getHeading(), kinematic.position.x, kinematic.position.y + 20);
@@ -89,8 +89,25 @@ class Boid
       text("Rotational Velocity: " + kinematic.rotational_velocity, kinematic.position.x + 50, kinematic.position.y + 35);
       text("Rotation: " + rotation, kinematic.position.x + 50, kinematic.position.y + 50);
       text("Clockwise: " + clockwise, kinematic.position.x + 50, kinematic.position.y + 65);
+      text("Variable values:" + speed, kinematic.position.x + 50, kinematic.position.y + 80);
+      text("boidPos: " + boidPos, kinematic.position.x + 50, kinematic.position.y + 95);
+      text("originPos: " + originPos, kinematic.position.x + 50, kinematic.position.y + 110);
+      text("finish: " + finish, kinematic.position.x + 50, kinematic.position.y + 125);
       
-      kinematic.increaseSpeed(max_acceleration * dt, rotation * dt);
+      boidPos = sqrt(pow(target.x - kinematic.position.x, 2) + pow(target.y - kinematic.position.y, 2)); //distance formula applied
+      finish = boidPos / originPos; 
+      speed = max_acceleration * dt;
+      if (finish <= 0.5) {
+        kinematic.increaseSpeed(speed * 5, rotation * dt); //supposed to speed up in the beginning
+      }
+      else if (finish > 0.5 && finish <= 0.9){
+        kinematic.increaseSpeed(speed * -.25f, rotation * dt); //supposed to slow down a bit after reaching the halfway point
+      }
+      else {
+        kinematic.increaseSpeed(speed * -3f, rotation * dt);  //supposed to slow down a lot when it's pretty close
+      }
+      
+      //kinematic.increaseSpeed(max_acceleration * dt, rotation * dt);
     }
 
     //go 3 times faster and rotate 100000 times faster
@@ -110,6 +127,18 @@ class Boid
 
     draw();
   }
+  
+  float originPos = sqrt(pow(target.x - kinematic.position.x, 2) + pow(target.y - kinematic.position.y, 2));; //keeps track of the original position
+  float boidPos;  //keeps track of boid's current position
+  float finish;  //keeps a percentage of how far the boid has traveled on its path to the target
+  float speed;  // contains "max_acceleration * dt", mainly for brevity
+  boolean targetSet = false;  //checks if a target has been placed yet to avoid null pointer errors. It's in the seek method.
+  
+  // I get a syntax error here for it being an incomplete statement or having extra code but I can't figure why it says it
+  if (targetSet == true) {
+    originPos = sqrt(pow(target.x - kinematic.position.x, 2) + pow(target.y - kinematic.position.y, 2));
+  }
+  
 
   void draw()
   {
@@ -140,6 +169,7 @@ class Boid
 
   void seek(PVector target)
   {
+    targetSet = true;
     this.target = target;
   }
 
