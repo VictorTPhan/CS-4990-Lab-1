@@ -53,7 +53,6 @@ class Boid
   void update(float dt)
   {
     text(kinematic.getHeading(), kinematic.position.x, kinematic.position.y + 20);
-    kinematic.heading = -3;
     
     if (target != null)
     { 
@@ -64,7 +63,11 @@ class Boid
       
       //find the shortest radian distance between target and you (that way you don't do a giant rotation and mess up your speed)
       //this value is between -pi and pi
-      float shortestRadianDistance = min(targetRadian - normalize_angle_left_right(kinematic.getHeading()), TWO_PI - targetRadian - normalize_angle_left_right(kinematic.getHeading()));
+      float shortestRadianDistance = targetRadian - normalize_angle_left_right(kinematic.getHeading());
+      if (abs(shortestRadianDistance > PI){
+        shortestRadianDistance = signOf(shortestRadianDistance) * abs(shortestRadianDistance - PI);
+      }
+      
       boolean clockwise = shortestRadianDistance >= 0;
       
       float rotation = shortestRadianDistance/PI * max_rotational_acceleration;
@@ -73,8 +76,8 @@ class Boid
       //given acceleration, a destination angle, and a radian distance to a destination angle, you could calculate the radian angle at which you ought to slow down
       //therefore, if you're going too fast towards a target, we'll check if you've crossed this threshold yet. 
       //if you've crossed it, slow down.
-      boolean clockwiseAndApproaching = clockwise && kinematic.getHeading() > targetRadian - kinematic.rotational_velocity;
-      boolean counterClockwiseAndApproaching = !clockwise && normalize_angle_left_right(kinematic.getHeading()) < targetRadian - kinematic.rotational_velocity;
+      boolean clockwiseAndApproaching = clockwise && kinematic.getHeading() >= targetRadian - kinematic.rotational_velocity;
+      boolean counterClockwiseAndApproaching = !clockwise && normalize_angle_left_right(kinematic.getHeading()) <= targetRadian - kinematic.rotational_velocity;
       
       if (clockwiseAndApproaching || counterClockwiseAndApproaching)
       {
@@ -83,15 +86,16 @@ class Boid
       
       drawAngledLine(kinematic.getHeading(),  "heading");
       drawAngledLine(targetRadian, "target angle");
-      //drawAngledLine(targetRadian + kinematic.rotational_velocity, "stop here for clockwise");
-      //drawAngledLine(targetRadian - kinematic.rotational_velocity, "stop here for counter clockwise");
+      drawAngledLine(targetRadian + kinematic.rotational_velocity, "stop here for clockwise");
+      drawAngledLine(targetRadian - kinematic.rotational_velocity, "stop here for counter clockwise");
       
       text("Shortest Radian Distance: " + shortestRadianDistance + TWO_PI, kinematic.position.x + 50, kinematic.position.y + 20);
       text("Rotational Velocity: " + kinematic.rotational_velocity, kinematic.position.x + 50, kinematic.position.y + 35);
       text("Rotation: " + rotation, kinematic.position.x + 50, kinematic.position.y + 50);
       text("Clockwise: " + clockwise, kinematic.position.x + 50, kinematic.position.y + 65);
+      text("Approaching: " + (clockwiseAndApproaching || counterClockwiseAndApproaching), kinematic.position.x + 50, kinematic.position.y + 80);
       
-      //kinematic.increaseSpeed(max_acceleration * dt, rotation * dt);
+      kinematic.increaseSpeed(max_acceleration * dt, rotation * dt);
     }
 
     //go 3 times faster and rotate 100000 times faster
