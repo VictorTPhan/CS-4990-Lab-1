@@ -55,6 +55,15 @@ class Boid
     return sqrt(pow(A.x - B.x, 2) + pow(A.y - B.y, 2));
   }
   
+  float shortestRadianBetween(float radianA, float radianB)
+  {
+    //find the shortest radian distance between target and you (that way you don't do a giant rotation and mess up your speed)
+    //this value is between -pi and pi
+    float shortestRadianDistance = normalize_angle(radianA) - normalize_angle(radianB);
+    float counter = signOf(shortestRadianDistance) * -1 * (TWO_PI - abs(shortestRadianDistance));
+    return min(shortestRadianDistance, counter);
+  }
+  
   void update(float dt)
   {
     text(kinematic.getHeading(), kinematic.position.x, kinematic.position.y + 20);
@@ -68,7 +77,7 @@ class Boid
       
       //find the shortest radian distance between target and you (that way you don't do a giant rotation and mess up your speed)
       //this value is between -pi and pi
-      float shortestRadianDistance = min(normalize_angle(targetRadian) - kinematic.getHeading(), TWO_PI - (normalize_angle(targetRadian) - kinematic.getHeading()));
+      float shortestRadianDistance = shortestRadianBetween(targetRadian, kinematic.getHeading());
       boolean clockwise = shortestRadianDistance >= 0;
       
       float rotation = shortestRadianDistance/PI * max_rotational_acceleration;
@@ -107,7 +116,7 @@ class Boid
         speed = -max_acceleration;
       }
       
-      kinematic.increaseSpeed(speed * progress, rotation * dt);
+      kinematic.increaseSpeed(0 * progress, rotation * dt);
       //circle(kinematic.position.x, kinematic.position.y, kinematic.speed);
       //circle(target.x, target.y, kinematic.speed * (kinematic.speed / kinematic.max_speed));
       
