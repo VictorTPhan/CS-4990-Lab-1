@@ -49,11 +49,15 @@ class Boid
   {
     return (n > 0)? 1: -1;
   }
-
+  
+  float distanceBetween(PVector A, PVector B)
+  {
+    return sqrt(pow(A.x - B.x, 2) + pow(A.y - B.y, 2));
+  }
+  
   void update(float dt)
   {
     text(kinematic.getHeading(), kinematic.position.x, kinematic.position.y + 20);
-    kinematic.heading = -3;
     
     if (target != null)
     { 
@@ -64,7 +68,7 @@ class Boid
       
       //find the shortest radian distance between target and you (that way you don't do a giant rotation and mess up your speed)
       //this value is between -pi and pi
-      float shortestRadianDistance = min(targetRadian - normalize_angle_left_right(kinematic.getHeading()), TWO_PI - targetRadian - normalize_angle_left_right(kinematic.getHeading()));
+      float shortestRadianDistance = min(normalize_angle(targetRadian) - kinematic.getHeading(), TWO_PI - (normalize_angle(targetRadian) - kinematic.getHeading()));
       boolean clockwise = shortestRadianDistance >= 0;
       
       float rotation = shortestRadianDistance/PI * max_rotational_acceleration;
@@ -73,8 +77,9 @@ class Boid
       //given acceleration, a destination angle, and a radian distance to a destination angle, you could calculate the radian angle at which you ought to slow down
       //therefore, if you're going too fast towards a target, we'll check if you've crossed this threshold yet. 
       //if you've crossed it, slow down.
-      boolean clockwiseAndApproaching = clockwise && kinematic.getHeading() > targetRadian - kinematic.rotational_velocity;
-      boolean counterClockwiseAndApproaching = !clockwise && normalize_angle_left_right(kinematic.getHeading()) < targetRadian - kinematic.rotational_velocity;
+      boolean clockwiseAndApproaching = clockwise && kinematic.getHeading() > normalize_angle(targetRadian) - kinematic.rotational_velocity;
+      boolean counterClockwiseAndApproaching = !clockwise && normalize_angle_left_right(kinematic.getHeading()) < normalize_angle(targetRadian) - kinematic.rotational_velocity;
+      boolean approaching = clockwiseAndApproaching || counterClockwiseAndApproaching;
       
       if (clockwiseAndApproaching || counterClockwiseAndApproaching)
       {
@@ -90,8 +95,13 @@ class Boid
       text("Rotational Velocity: " + kinematic.rotational_velocity, kinematic.position.x + 50, kinematic.position.y + 35);
       text("Rotation: " + rotation, kinematic.position.x + 50, kinematic.position.y + 50);
       text("Clockwise: " + clockwise, kinematic.position.x + 50, kinematic.position.y + 65);
+      text("Approaching: " + approaching, kinematic.position.x + 50, kinematic.position.y + 80);
       
-      //kinematic.increaseSpeed(max_acceleration * dt, rotation * dt);
+      //circle(target.x, target.y, kinematic.speed);
+      
+      float distanceToTarget = distanceBetween(target, kinematic.position);
+      text("Positional Velocity: " + kinematic.speed, kinematic.position.x + 50,kinematic.position.y + 95);
+      text("Distance from Target: " + distanceToTarget, kinematic.position.x + 50, kinematic.position.y + 110);
     }
 
     //go 3 times faster and rotate 100000 times faster
@@ -111,7 +121,13 @@ class Boid
 
     draw();
   }
-
+  
+  PVector origin;
+  float originPos; //keeps track of the original position
+  float boidPos;  //keeps track of boid's current position
+  float finish;  //keeps a percentage of how far the boid has traveled on its path to the target
+  float speed;  // contains "max_acceleration * dt", mainly for brevity
+  
   void draw()
   {
     for (Crumb c : this.crumbs)
@@ -142,6 +158,7 @@ class Boid
   void seek(PVector target)
   {
     this.target = target;
+    origin = kinematic.position;
   }
 
   void follow(ArrayList<PVector> waypoints)
