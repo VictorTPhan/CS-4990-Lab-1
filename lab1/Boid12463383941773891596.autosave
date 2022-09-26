@@ -125,8 +125,7 @@ class Boid
       
       float targetToOrigin = distanceBetween(target, origin);
       float targetToBoid = distanceBetween(target, kinematic.position);
-      speed = max_acceleration;
-      speed -= (abs(shortestRadianDistance)/PI * speed) * 2;
+      speed = max_acceleration * ((PI - abs(shortestRadianDistance)) / TWO_PI);
       float progress = targetToBoid / targetToOrigin;  //closer it is to 0, the closer the boid is to the target  
       float velocityAmount = kinematic.speed/kinematic.max_speed;
       
