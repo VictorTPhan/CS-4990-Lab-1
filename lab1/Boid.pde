@@ -42,7 +42,7 @@ class Boid
     float y1 = sin(radian) * lineLength;
     float x1 = cos(radian) * lineLength;
     line(kinematic.position.x, kinematic.position.y, kinematic.position.x + x1, kinematic.position.y + y1);
-    
+
     text(tag + " " + radian, kinematic.position.x + x1, kinematic.position.y + y1);
   }
 
@@ -51,12 +51,12 @@ class Boid
   {
     return (n > 0)? 1: -1;
   }
-  
+
   float distanceBetween(PVector A, PVector B)
   {
     return sqrt(pow(A.x - B.x, 2) + pow(A.y - B.y, 2));
   }
-  
+
   //finds the shortest radian between radianA to radianB.
   //if returns negative, then A is to the left of B.
   float shortestRadianBetween(float radianA, float radianB)
@@ -67,106 +67,136 @@ class Boid
     float counter = signOf(shortestRadianDistance) * -1 * (TWO_PI - abs(shortestRadianDistance));
     return (abs(shortestRadianDistance) < abs(counter))? shortestRadianDistance: counter;
   }
-  
+
   boolean movingToLastPoint() {
     return points != null && currentPointIndex == points.size()-1;
   }
-  
+
   float angleToNextPoint;
-  void getAngleToNextPoint() {
-    //find out the angle of the next point
-    angleToNextPoint = atan2(points.get(currentPointIndex+1).y - kinematic.position.y, points.get(currentPointIndex+1).x - kinematic.position.x);
-    println(angleToNextPoint);
+
+  float getAngleBetween(PVector A, PVector B, PVector C) {
+    PVector AB = PVector.sub(B,A);
+    PVector BC = PVector.sub(C,B);
+    float theta = PVector.angleBetween(AB, BC);
+    println(theta * 52.97);
+    return theta;
   }
-  
+
+  void getAngleToNextPoint() {
+    angleToNextPoint = getAngleBetween(points.get(currentPointIndex), points.get(currentPointIndex + 1), points.get(currentPointIndex + 2));
+  }
+
+  float slopeOf(PVector A, PVector B)
+  {
+    return ((B.y-A.y)/(B.x-A.x));
+  }
+
   void update(float dt)
   {
-    text(kinematic.getHeading(), kinematic.position.x, kinematic.position.y + 20);    
+    text(kinematic.getHeading(), kinematic.position.x, kinematic.position.y + 20);
+
+    if (points != null) {
+      for (int i = 0; i<points.size(); i++)
+      {
+        circle(points.get(i).x, points.get(i).y, (i==currentPointIndex)? 20: 10);
+        text(i, points.get(i).x + 10, points.get(i).y + 10);
+      }
+    }
+
     if (target != null)
-    { 
+    {
       circle(origin.x, origin.y, 10);
       circle(target.x, target.y, 10);
-      
+
       //grab direction of target
       float targetRadian = atan2(target.y - kinematic.position.y, target.x - kinematic.position.x);
-      
+
       //find the shortest radian distance between target and you (that way you don't do a giant rotation and mess up your speed)
       //this value is between -pi and pi
       float shortestRadianDistance = shortestRadianBetween(targetRadian, kinematic.getHeading());
       boolean clockwise = shortestRadianDistance >= 0;
-      
-      float rotation = shortestRadianDistance/PI * max_rotational_acceleration;
-      
+
+      float rotation = signOf(shortestRadianDistance) * max_rotational_acceleration;
+
       //first expression is self explanatory, second expressed will determine the slowdown marker
       //given acceleration, a destination angle, and a radian distance to a destination angle, you could calculate the radian angle at which you ought to slow down
-      //therefore, if you're going too fast towards a target, we'll check if you've crossed this threshold yet. 
+      //therefore, if you're going too fast towards a target, we'll check if you've crossed this threshold yet.
       //if you've crossed it, slow down.
       boolean clockwiseAndApproaching = clockwise && shortestRadianBetween(kinematic.getHeading(), targetRadian - kinematic.rotational_velocity) > 0;
       boolean counterClockwiseAndApproaching = !clockwise && shortestRadianBetween(kinematic.getHeading(), targetRadian - kinematic.rotational_velocity) < 0;
       //println(kinematic.getHeading() + kinematic.rotational_velocity);
       //println(shortestRadianBetween(kinematic.getHeading(), targetRadian + kinematic.rotational_velocity));
       boolean approaching = clockwiseAndApproaching || counterClockwiseAndApproaching;
-      
+
       if (approaching)
       {
-         rotation = max_rotational_acceleration * signOf(rotation) * -1;
+        rotation = max_rotational_acceleration * signOf(rotation) * -1;
       }
-      
-      drawAngledLine(kinematic.getHeading(),  "heading");
+
+      drawAngledLine(kinematic.getHeading(), "heading");
       drawAngledLine(targetRadian, "target angle");
-      drawAngledLine(targetRadian - kinematic.rotational_velocity, "catching line");
-      drawAngledLine(targetRadian + kinematic.rotational_velocity, "catching line");
-      
+      //drawAngledLine(targetRadian - kinematic.rotational_velocity, "catching line");
+      //drawAngledLine(targetRadian + kinematic.rotational_velocity, "catching line");
+
       text("Shortest Radian Distance: " + shortestRadianDistance + TWO_PI, kinematic.position.x + 50, kinematic.position.y + 20);
       text("Rotational Velocity: " + kinematic.rotational_velocity, kinematic.position.x + 50, kinematic.position.y + 35);
       text("Rotation: " + rotation, kinematic.position.x + 50, kinematic.position.y + 50);
       text("Clockwise: " + clockwise, kinematic.position.x + 50, kinematic.position.y + 65);
       text("Approaching: " + approaching, kinematic.position.x + 50, kinematic.position.y + 80);
-      
+
       float targetToOrigin = distanceBetween(target, origin);
       float targetToBoid = distanceBetween(target, kinematic.position);
       speed = max_acceleration;
       speed -= (abs(shortestRadianDistance)/PI * speed) * 2;
-      float progress = targetToBoid / targetToOrigin;  //closer it is to 0, the closer the boid is to the target  
+      float progress = targetToBoid / targetToOrigin;  //closer it is to 0, the closer the boid is to the target
       float velocityAmount = kinematic.speed/kinematic.max_speed;
-      
+
       /*
       //preparation radius
-      if (progress < 0.5) {
-        //if angle to next point is 0, then don't stop at all
-        //if angle to next point is PI, then do pretty much a full stop
-        //this variable goes from -1 to 0
-        float brakingMultiplier = -abs(angleToNextPoint)/PI;
-        println(brakingMultiplier);
-        
-        speed *= brakingMultiplier;
-      }
-      */
-      
-      
+       if (progress < 0.5) {
+       //if angle to next point is 0, then don't stop at all
+       //if angle to next point is PI, then do pretty much a full stop
+       //this variable goes from -1 to 0
+       float brakingMultiplier = -abs(angleToNextPoint)/PI;
+       println(brakingMultiplier);
+       
+       speed *= brakingMultiplier;
+       }
+       */
+
+      if (progress < velocityAmount * ((HALF_PI - min(HALF_PI, abs(theta)))/2))
+
       //it's pretty much done at this point
       if (progress < 0.2) {
         println("Finished with point: " + currentPointIndex);
-        if (points != null && currentPointIndex < points.size()-1)
+        if ((points != null && points.size() > 2) || currentPointIndex < points.size()-1)
         {
-          currentPointIndex++;
-          seek(points.get(currentPointIndex));
-          println("Moving to point: " + currentPointIndex);
+          if (currentPointIndex < points.size()-2)
+          {
+            getAngleToNextPoint();
+          }
+
+          if (!movingToLastPoint())
+          {
+            currentPointIndex++;
+            seek(points.get(currentPointIndex));
+            println("Moving to point: " + currentPointIndex);
+          }
         }
       }
-      
+
       if (movingToLastPoint())
       {
         if (progress < velocityAmount) {
           speed = -max_acceleration;
         }
       }
-      
-  
+
+
       kinematic.increaseSpeed(speed * progress, rotation * dt);
       //circle(kinematic.position.x, kinematic.position.y, kinematic.speed);
       //circle(target.x, target.y, kinematic.speed * (kinematic.speed / kinematic.max_speed));
-      
+
       text("Positional Velocity: " + speed, kinematic.position.x + 50, kinematic.position.y + 95);
       text("Progress: " + progress, kinematic.position.x + 50, kinematic.position.y + 110);
       text("Velocity Amount: " + velocityAmount, kinematic.position.x + 50, kinematic.position.y +125);
@@ -192,10 +222,10 @@ class Boid
 
     draw();
   }
-  
+
   PVector origin;
   float speed;  // contains "max_acceleration * dt", mainly for brevity
-  
+
   void draw()
   {
     for (Crumb c : this.crumbs)
@@ -234,7 +264,7 @@ class Boid
     // TODO: change to follow *all* waypoints
     points = waypoints;
     currentPointIndex = 0;
+    getAngleBetween(kinematic.position, points.get(0), points.get(1));
     seek(points.get(currentPointIndex));
-    getAngleToNextPoint();
   }
 }
