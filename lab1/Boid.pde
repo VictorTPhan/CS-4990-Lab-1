@@ -75,8 +75,8 @@ class Boid
   float angleToNextPoint;
 
   float getAngleBetween(PVector A, PVector B, PVector C) {
-    PVector AB = PVector.sub(B,A);
-    PVector BC = PVector.sub(C,B);
+    PVector AB = PVector.sub(B, A);
+    PVector BC = PVector.sub(C, B);
     float theta = PVector.angleBetween(AB, BC);
     println(theta * 52.97);
     return theta;
@@ -130,7 +130,7 @@ class Boid
 
       if (approaching)
       {
-        rotation = max_rotational_acceleration * signOf(rotation) * -1;
+        rotation =  signOf(rotation) * -1;
       }
 
       drawAngledLine(kinematic.getHeading(), "heading");
@@ -164,10 +164,13 @@ class Boid
        }
        */
 
-      if (progress < velocityAmount * ((HALF_PI - min(HALF_PI, abs(theta)))/2))
-
+      float brakeMultiplier = ((min(HALF_PI, abs(angleToNextPoint)))/2);
+      if (progress < 1 && progress < velocityAmount * brakeMultiplier)
+      {
+        speed = -max_acceleration;
+      }
       //it's pretty much done at this point
-      if (progress < 0.2) {
+      if (progress < 0.2 || targetToBoid < 50) {
         println("Finished with point: " + currentPointIndex);
         if ((points != null && points.size() > 2) || currentPointIndex < points.size()-1)
         {
@@ -203,6 +206,7 @@ class Boid
       text("Target to Boid: " + targetToBoid, kinematic.position.x + 50, kinematic.position.y + 140);
       text("Angle to Next Point: " + angleToNextPoint, kinematic.position.x + 50, kinematic.position.y + 155);
       text("Kinematic Velocity: " + kinematic.speed, kinematic.position.x + 50, kinematic.position.y + 170);
+      text("Braking Multiplier: " + brakeMultiplier, kinematic.position.x + 50, kinematic.position.y + 185);
     }
 
     //go 3 times faster and rotate 100000 times faster
@@ -264,7 +268,7 @@ class Boid
     // TODO: change to follow *all* waypoints
     points = waypoints;
     currentPointIndex = 0;
-    getAngleBetween(kinematic.position, points.get(0), points.get(1));
+    angleToNextPoint = getAngleBetween(kinematic.position, points.get(0), points.get(1));
     seek(points.get(currentPointIndex));
   }
 }

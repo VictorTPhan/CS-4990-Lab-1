@@ -14,7 +14,7 @@ float BILLY_MAX_SPEED = 80;
 float BILLY_MAX_ROTATIONAL_SPEED = 3;
 
 float BILLY_MAX_ACCELERATION = 1;
-float BILLY_MAX_ROTATIONAL_ACCELERATION = 10;
+float BILLY_MAX_ROTATIONAL_ACCELERATION = 30;
 
 // Should boids leave breadcrumbs behind?
 boolean LEAVE_CRUMBS = true;
