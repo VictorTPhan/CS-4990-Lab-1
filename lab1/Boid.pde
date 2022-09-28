@@ -170,9 +170,9 @@ class Boid
         speed = -max_acceleration;
       }
       //it's pretty much done at this point
-      if (progress < 0.2 || targetToBoid < 50) {
+      if (targetToBoid < 50) {
         println("Finished with point: " + currentPointIndex);
-        if ((points != null && points.size() > 2) || currentPointIndex < points.size()-1)
+        if (points != null && (points.size() > 2 || currentPointIndex < points.size()-1))
         {
           if (currentPointIndex < points.size()-2)
           {
