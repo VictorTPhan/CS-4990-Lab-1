@@ -17,7 +17,6 @@ class Wall
       normal = new PVector(-direction.y, direction.x);
    }
    
-   
    boolean crosses(PVector from, PVector to)
    {
       // Vector pointing from `this.start` to `from`
@@ -148,6 +147,52 @@ class Map
        walls = new ArrayList<Wall>();
        outline = new ArrayList<Wall>();
        obstacles = new ArrayList<Obstacle>();
+   }
+  
+   PVector percentFromPoint(PVector from, PVector to, float percent)
+   {
+     //p1 + ((p2 - p1) * percent)
+     return PVector.add(from, PVector.mult(PVector.sub(to, from),percent));
+   }
+   
+   boolean intersectsWall(PVector from, PVector to)
+   {  
+      //5% of the way from the start
+      PVector start = percentFromPoint(from, to, 0.05);
+      
+      //95% of the way from the start
+      PVector end = percentFromPoint(from, to, 0.95);
+      
+      if (!isReachable(start)) return true;
+     
+      //println("Start: " + start);
+      //println("End: " + end);
+     
+      for (Wall w : walls)
+      {
+         if (w.crosses(start, end)) return true;
+      }
+      return false;
+   }
+  
+   boolean intersectsPolygon(PVector from, PVector to, ArrayList<Wall> polygon)
+   {  
+      //5% of the way from the start
+      PVector start = percentFromPoint(from, to, 0.05);
+      
+      //95% of the way from the start
+      PVector end = percentFromPoint(from, to, 0.95);
+      
+      if (!isReachable(start)) return true;
+     
+      //println("Start: " + start);
+      //println("End: " + end);
+     
+      for (Wall w : polygon)
+      {
+         if (w.crosses(start, end)) return true;
+      }
+      return false;
    }
   
    boolean collides(PVector from, PVector to)

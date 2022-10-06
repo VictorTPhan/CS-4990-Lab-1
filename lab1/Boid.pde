@@ -128,6 +128,7 @@ class Boid
       //println(shortestRadianBetween(kinematic.getHeading(), targetRadian + kinematic.rotational_velocity));
       boolean approaching = clockwiseAndApproaching || counterClockwiseAndApproaching;
 
+      //if you're coming close, then slow down!
       if (approaching)
       {
         rotation =  signOf(rotation) * -1;
@@ -146,29 +147,19 @@ class Boid
 
       float targetToOrigin = distanceBetween(target, origin);
       float targetToBoid = distanceBetween(target, kinematic.position);
+      
       speed = max_acceleration;
       speed -= (abs(shortestRadianDistance)/PI * speed) * 2;
+      
       float progress = targetToBoid / targetToOrigin;  //closer it is to 0, the closer the boid is to the target
-      float velocityAmount = kinematic.speed/kinematic.max_speed;
-
-      /*
-      //preparation radius
-       if (progress < 0.5) {
-       //if angle to next point is 0, then don't stop at all
-       //if angle to next point is PI, then do pretty much a full stop
-       //this variable goes from -1 to 0
-       float brakingMultiplier = -abs(angleToNextPoint)/PI;
-       println(brakingMultiplier);
-       
-       speed *= brakingMultiplier;
-       }
-       */
+      float velocityAmount = kinematic.speed/kinematic.max_speed; 
 
       float brakeMultiplier = ((min(HALF_PI, abs(angleToNextPoint)))/2);
       if (progress < 1 && progress < velocityAmount * brakeMultiplier)
       {
         speed = -max_acceleration;
       }
+      
       //it's pretty much done at this point
       if (targetToBoid < 50) {
         println("Finished with point: " + currentPointIndex);
@@ -196,7 +187,7 @@ class Boid
       }
 
 
-      kinematic.increaseSpeed(speed * progress, rotation * dt);
+      //kinematic.increaseSpeed(speed * progress, rotation * dt);
       //circle(kinematic.position.x, kinematic.position.y, kinematic.speed);
       //circle(target.x, target.y, kinematic.speed * (kinematic.speed / kinematic.max_speed));
 
@@ -268,7 +259,7 @@ class Boid
     // TODO: change to follow *all* waypoints
     points = waypoints;
     currentPointIndex = 0;
-    angleToNextPoint = getAngleBetween(kinematic.position, points.get(0), points.get(1));
+    if (points.size() > 2) angleToNextPoint = getAngleBetween(kinematic.position, points.get(0), points.get(1));
     seek(points.get(currentPointIndex));
   }
 }

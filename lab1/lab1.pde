@@ -39,7 +39,8 @@ void mousePressed() {
      
      if (waypoints.size() == 0)
      {
-        billy.seek(target);
+        waypoints.add(target);
+        billy.follow(waypoints);
      }
      else
      {
