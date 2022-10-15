@@ -60,6 +60,57 @@ class Node
 }
 
 
+class FrontierEntry
+{
+  Node current;
+  FrontierEntry prev;
+  float heuristic;
+  float distance;
+  
+  FrontierEntry(Node current, FrontierEntry prev, float heuristic, float distance)
+  {
+    this.current = current;
+    this.prev = prev;
+    this.heuristic = heuristic;
+    this.distance = distance;
+  }
+  
+  Node getNode()
+  {
+    return current;
+  }
+  
+  FrontierEntry getPrev()
+  {
+    return prev;
+  }
+}
+
+//only works when outside the class for some reason
+//getting heuristic value
+float getH(PVector current, PVector destination)
+{
+  return sqrt(pow((destination.x - current.x), 2) + pow((destination.y - current.y), 2));
+}
+
+//getting distance from start
+float getDist(PVector start, PVector current)
+{
+  return (sqrt(pow((start.x - current.x), 2) + pow((start.y - current.y), 2)));
+}
+
+class FrontierCompare implements Comparator<FrontierEntry>
+{ 
+  int compare(FrontierEntry a, FrontierEntry b)
+  {
+     if ((a.heuristic + a.distance) < (b.heuristic + b.distance))
+        return -1;
+     else if ((a.heuristic + a.distance) > (b.heuristic + b.distance))
+        return 1;
+     else
+        return 0; 
+  }
+}
 
 class NavMesh
 {
@@ -333,16 +384,67 @@ class NavMesh
     //some nice printouts
     printAdjacencies();
     println("Reduced map to " + nodes.size() + " polygons");
+    
+    if (nodes.size() > 5) path = findPath(test1, test2);
+    
   }
+  
+  ArrayList<PVector> path = new ArrayList<PVector>();
+  PVector test1 = new PVector(70, 10);
+  PVector test2 = new PVector(210, 170);
+  
 
   ArrayList<PVector> findPath(PVector start, PVector destination)
   {
-    /// implement A* to find a path
-    ArrayList<PVector> result = null;
+    //implement A*Star to find a path
+    ArrayList<PVector> result = new ArrayList<PVector>(); //contains the path the boid will take
+    ArrayList<FrontierEntry> frontier = new ArrayList<FrontierEntry>(); //contains the frontiers that A*Star uses to find the path
+    ArrayList<Node> visited = new ArrayList<Node>(); //contains nodes that we have already visited, so the boid doesn't go backwards
+    Node finalNode = nodes.get(1); //contains the node the destination is at 
+    
+    //initiating all the lists lists with the first PVector, frontier, and visited frontier respectively
+    result.add(nodes.get(0).getCenter());
+    FrontierEntry s = new FrontierEntry(nodes.get(0), null, getH(start, destination), 0); //parameter order: node, previous node, heuristic, distance from start
+    frontier.add(s);
+    visited.add(nodes.get(0));
+    
+    for (Node d: nodes)
+    {
+      if (isPointInPolygon(destination, d.polygon))
+      {
+        finalNode = d;
+      }
+    }
+    
+    //loop that goes on while the "result" list is still getting to the destination. It should stop when it reaches the polygon that contains the destination.
+    while (frontier.get(0).getNode() != finalNode)
+    {
+      //getting the neighbors of the node and adding them as frontiers
+      FrontierEntry fGet = frontier.get(0);
+      for (Node n: fGet.getNode().neighbors)
+      {
+        if (!visited.contains(n))  //this is the statement in question. 
+        {
+          //used variables here since otherwise the add statement gets obnoxiously long
+          Node contain = n;
+          float h = getH(n.getCenter(), destination); //heuristic
+          float d = getDist(result.get(0), n.getCenter()); //distance from start
+          frontier.add(new FrontierEntry(contain, fGet, h, d)); 
+        }
+      }
+      frontier.remove(0); //removes first frontier
+      frontier.sort(new FrontierCompare()); //sorts the list of frontiers
+      result.add(frontier.get(0).getNode().getCenter());  //adds the PVector of the first frontier in the "result" list
+      visited.add(frontier.get(0).getNode()); //adds the node to "visited" list
+      //E: A*Star has nothing to do with getting coordinates. Only going from one polygon to the other.
+    }
+    
+    result.add(frontier.get(0).getNode().getCenter()); //adds last frontier to "result"
+    
     return result;
   }
 
-
+  
   void update(float dt)
   {
     draw();
@@ -354,7 +456,7 @@ class NavMesh
     {
       //text(i,map.walls.get(i).start.x+10, map.walls.get(i).start.y+10);
     }
-    
+    /*
     for (Node n: nodes)
     {
       for (Wall w: n.polygon)
@@ -368,5 +470,16 @@ class NavMesh
         line(center.x, center.y, nb.getCenter().x, nb.getCenter().y);
       }
     }
+    */
+    
+    for (int j = 0; j < path.size() - 1; j++) //<>//
+    {
+      text(path.get(0).x, 35, 135);
+      text(path.get(0).y, 35, 145);
+      text(path.get(1).x, 35, 155);
+      text(path.get(1).y, 35, 165);
+      line(path.get(j).x, path.get(j).y, path.get(j+1).x, path.get(j+1).y);
+    }
+
   }
 }
