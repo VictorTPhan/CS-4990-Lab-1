@@ -6,7 +6,7 @@ boolean DEBUG = false;
 int BOID_SIZE = 20;
 
 // Where does billy start?
-PVector BILLY_START = new PVector(250,250);
+PVector BILLY_START = new PVector(50,400);
 float BILLY_START_HEADING = 0;
 
 // How fast can billy go and turn?
@@ -14,7 +14,7 @@ float BILLY_MAX_SPEED = 80;
 float BILLY_MAX_ROTATIONAL_SPEED = 3;
 
 float BILLY_MAX_ACCELERATION = 1;
-float BILLY_MAX_ROTATIONAL_ACCELERATION = 30;
+float BILLY_MAX_ROTATIONAL_ACCELERATION = 45;
 
 // Should boids leave breadcrumbs behind?
 boolean LEAVE_CRUMBS = true;
@@ -28,7 +28,7 @@ int CRUMB_INTERVAL = 200;
 // How big are the crumbs?
 int CRUMB_SIZE = 2;
 
-// use for debugging, if you want to see where walls start/end (a circle is drawn closer to the end)
+// use for debugging, if you want to see where walls start/end (a cir444cle is drawn closer to the end)
 boolean SHOW_WALL_DIRECTION = true;
 
 // How many obstacles should be generated *at most*

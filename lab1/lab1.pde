@@ -39,22 +39,56 @@ void mousePressed() {
      
      if (waypoints.size() == 0)
      {
-        waypoints.add(target);
-        billy.follow(waypoints);
+        if (nm.nodes.size() > 0)
+        {
+           println("Following path");
+           waypoints = nm.findPath(billy.kinematic.position, target);
+           billy.follow(waypoints);
+        }
+        else {
+           billy.seek(target);
+        }
      }
      else
      {
-        waypoints.add(target);
+        if (nm.nodes.size() > 0)
+        {
+          println("Finishing Path");
+          PVector startPoint = waypoints.get(waypoints.size() -1);
+          ArrayList<PVector> finalRoute = nm.findPath(startPoint, target);
+          for (PVector p: finalRoute)
+          {
+            waypoints.add(p);
+          }
+        }
         entering_path = false;
         billy.follow(waypoints);
      }
   }
   else if (mouseButton == RIGHT)
   {
-     if (!entering_path)
-        waypoints = new ArrayList<PVector>();
-     waypoints.add(target);
-     entering_path = true; 
+     if (!entering_path) 
+     {
+        if (nm.nodes.size() > 0)
+        {
+          println("Creating path");
+          waypoints = nm.findPath(billy.kinematic.position, target);
+        } else {
+          waypoints.add(target);
+          entering_path = true; 
+        }
+     }
+     else {
+       entering_path = true;
+       if (nm.nodes.size() > 0)
+        {
+          println("Adding to path");
+          waypoints = nm.findPath(billy.kinematic.position, target);
+        } else {
+          waypoints.add(target);
+          entering_path = true; 
+        }
+     }
   }
 }
 

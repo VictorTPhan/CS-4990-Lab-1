@@ -34,6 +34,24 @@ class Boid
     this.max_acceleration = acceleration;
     this.max_rotational_acceleration = rotational_acceleration;
   }
+  
+  float distanceToNextPoint(int index) {
+    int nextIndex = index+1;
+    if (nextIndex >= points.size())
+      return -1;
+    else {
+      PVector currentPoint = points.get(index);
+      PVector nextPoint = points.get(nextIndex);
+      return distanceBetween(currentPoint, nextPoint);
+    }
+  }
+  
+  boolean shouldChangeFinishingRadius(int currentIndex)
+  {
+    float result = distanceToNextPoint(currentIndex);
+    if (result < 0 || result > defaultFinishRadius) return false;
+    else return true;
+  }
 
   //another helper function because i can't remember trigonometry that well
   void drawAngledLine(float radian, String tag)
@@ -69,7 +87,7 @@ class Boid
   }
 
   boolean movingToLastPoint() {
-    return points != null && currentPointIndex == points.size()-1;
+    return (points==null || points.size() == 0) || (points != null && currentPointIndex == points.size()-1);
   }
 
   float angleToNextPoint;
@@ -91,6 +109,9 @@ class Boid
     return ((B.y-A.y)/(B.x-A.x));
   }
 
+  float defaultFinishRadius = 20;
+  float finishRadius = 20;
+
   void update(float dt)
   {
     text(kinematic.getHeading(), kinematic.position.x, kinematic.position.y + 20);
@@ -106,7 +127,7 @@ class Boid
     if (target != null)
     {
       circle(origin.x, origin.y, 10);
-      circle(target.x, target.y, 10);
+      circle(target.x, target.y, finishRadius);
 
       //grab direction of target
       float targetRadian = atan2(target.y - kinematic.position.y, target.x - kinematic.position.x);
@@ -122,8 +143,8 @@ class Boid
       //given acceleration, a destination angle, and a radian distance to a destination angle, you could calculate the radian angle at which you ought to slow down
       //therefore, if you're going too fast towards a target, we'll check if you've crossed this threshold yet.
       //if you've crossed it, slow down.
-      boolean clockwiseAndApproaching = clockwise && shortestRadianBetween(kinematic.getHeading(), targetRadian - kinematic.rotational_velocity) > 0;
-      boolean counterClockwiseAndApproaching = !clockwise && shortestRadianBetween(kinematic.getHeading(), targetRadian - kinematic.rotational_velocity) < 0;
+      boolean clockwiseAndApproaching = clockwise && shortestRadianBetween(kinematic.getHeading(), targetRadian - (kinematic.rotational_velocity/2)) > 0;
+      boolean counterClockwiseAndApproaching = !clockwise && shortestRadianBetween(kinematic.getHeading(), targetRadian - (kinematic.rotational_velocity/2)) < 0;
       //println(kinematic.getHeading() + kinematic.rotational_velocity);
       //println(shortestRadianBetween(kinematic.getHeading(), targetRadian + kinematic.rotational_velocity));
       boolean approaching = clockwiseAndApproaching || counterClockwiseAndApproaching;
@@ -149,20 +170,26 @@ class Boid
       float targetToBoid = distanceBetween(target, kinematic.position);
       
       speed = max_acceleration;
-      speed -= (abs(shortestRadianDistance)/PI * speed) * 2;
-      
+           
       float progress = targetToBoid / targetToOrigin;  //closer it is to 0, the closer the boid is to the target
       float velocityAmount = kinematic.speed/kinematic.max_speed; 
 
       float brakeMultiplier = ((min(HALF_PI, abs(angleToNextPoint)))/2);
-      if (progress < 1 && progress < velocityAmount * brakeMultiplier)
+      float slowdownThreshold = pow(velocityAmount * brakeMultiplier, 2);
+      //circle(target.x,target.y, slowdownThreshold * targetToOrigin);
+      if (progress < slowdownThreshold)
       {
         speed = -max_acceleration;
       }
       
+      float speedDampen = 3;
+      if (abs(kinematic.rotational_velocity) > 1 && kinematic.speed > 30) {
+        speed -= (abs(shortestRadianDistance)/PI * speed) * 2 * speedDampen;
+      }
+      
       //it's pretty much done at this point
-      if (targetToBoid < 50) {
-        println("Finished with point: " + currentPointIndex);
+      if (targetToBoid < finishRadius) {
+        println("Finished with point: " + currentPointIndex); //<>// //<>//
         if (points != null && (points.size() > 2 || currentPointIndex < points.size()-1))
         {
           if (currentPointIndex < points.size()-2)
@@ -187,7 +214,7 @@ class Boid
       }
 
 
-      //kinematic.increaseSpeed(speed * progress, rotation * dt);
+      kinematic.increaseSpeed(speed * progress, rotation * dt);
       //circle(kinematic.position.x, kinematic.position.y, kinematic.speed);
       //circle(target.x, target.y, kinematic.speed * (kinematic.speed / kinematic.max_speed));
 
@@ -252,6 +279,12 @@ class Boid
   {
     this.target = target;
     origin = kinematic.position;
+    if (shouldChangeFinishingRadius(currentPointIndex))
+      finishRadius = defaultFinishRadius / 2;
+    else finishRadius = defaultFinishRadius;
+    
+    println("Origin: " + origin);
+    println("Target: " + target);
   }
 
   void follow(ArrayList<PVector> waypoints)
