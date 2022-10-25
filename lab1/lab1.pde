@@ -111,6 +111,20 @@ void keyPressed()
        mapnr = -1;
        nm.bake(map);
     }
+    if (key == 'p')
+    {
+      nm.maxDepth++;
+      nm.bake(map);
+    }
+    if (key == 'i') {
+      nm.maxDepth = 1;
+      nm.bake(map);
+    }
+    if (key == 'o')
+    {
+      nm.maxDepth--;
+      nm.bake(map);
+    }
     else if (key == 'n')
     {
        show_nav_mesh = !show_nav_mesh;

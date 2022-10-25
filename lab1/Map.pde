@@ -158,10 +158,10 @@ class Map
    boolean intersectsWall(PVector from, PVector to)
    {  
       //5% of the way from the start
-      PVector start = percentFromPoint(from, to, 0.05);
+      PVector start = percentFromPoint(from, to, 0.01);
       
       //95% of the way from the start
-      PVector end = percentFromPoint(from, to, 0.95);
+      PVector end = percentFromPoint(from, to, 0.99);
       
       if (!isReachable(start)) return true;
      

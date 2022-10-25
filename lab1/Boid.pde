@@ -42,6 +42,7 @@ class Boid
     else {
       PVector currentPoint = points.get(index);
       PVector nextPoint = points.get(nextIndex);
+      print("From " + index + " to " + nextIndex + ": ");
       return distanceBetween(currentPoint, nextPoint);
     }
   }
@@ -49,7 +50,8 @@ class Boid
   boolean shouldChangeFinishingRadius(int currentIndex)
   {
     float result = distanceToNextPoint(currentIndex);
-    if (result < 0 || result > defaultFinishRadius) return false;
+    println(result);
+    if (result < 0 || result > defaultFinishRadius + 20) return false; //<>//
     else return true;
   }
 
@@ -119,14 +121,12 @@ class Boid
     if (points != null) {
       for (int i = 0; i<points.size(); i++)
       {
-        circle(points.get(i).x, points.get(i).y, (i==currentPointIndex)? 20: 10);
         text(i, points.get(i).x + 10, points.get(i).y + 10);
       }
     }
 
     if (target != null)
     {
-      circle(origin.x, origin.y, 10);
       circle(target.x, target.y, finishRadius);
 
       //grab direction of target
@@ -183,15 +183,19 @@ class Boid
       }
       
       float speedDampen = 3;
-      if (abs(kinematic.rotational_velocity) > 1 && kinematic.speed > 30) {
+      if (abs(kinematic.rotational_velocity) > 1 && kinematic.speed > 10) {
         speed -= (abs(shortestRadianDistance)/PI * speed) * 2 * speedDampen;
       }
       
       //it's pretty much done at this point
       if (targetToBoid < finishRadius) {
-        println("Finished with point: " + currentPointIndex); //<>// //<>//
+        println("Finished with point: " + currentPointIndex);  //<>//
         if (points != null && (points.size() > 2 || currentPointIndex < points.size()-1))
         {
+          if (shouldChangeFinishingRadius(currentPointIndex))
+            finishRadius = defaultFinishRadius/3;
+          else finishRadius = defaultFinishRadius;
+          
           if (currentPointIndex < points.size()-2)
           {
             getAngleToNextPoint();
@@ -208,7 +212,7 @@ class Boid
 
       if (movingToLastPoint())
       {
-        if (progress < velocityAmount) {
+        if (progress < velocityAmount*velocityAmount) {
           speed = -max_acceleration;
         }
       }
@@ -279,9 +283,6 @@ class Boid
   {
     this.target = target;
     origin = kinematic.position;
-    if (shouldChangeFinishingRadius(currentPointIndex))
-      finishRadius = defaultFinishRadius / 2;
-    else finishRadius = defaultFinishRadius;
     
     println("Origin: " + origin);
     println("Target: " + target);

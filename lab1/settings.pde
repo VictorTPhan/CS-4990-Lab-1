@@ -10,7 +10,7 @@ PVector BILLY_START = new PVector(50,400);
 float BILLY_START_HEADING = 0;
 
 // How fast can billy go and turn?
-float BILLY_MAX_SPEED = 80;
+float BILLY_MAX_SPEED = 50;
 float BILLY_MAX_ROTATIONAL_SPEED = 3;
 
 float BILLY_MAX_ACCELERATION = 1;

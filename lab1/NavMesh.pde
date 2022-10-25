@@ -84,7 +84,7 @@ class FrontierEntry{
   Node node;
   FrontierEntry previousFrontier;
   float distanceToEnd;
-  float distanceToLast = 1000;
+  float distanceToLast = 0;
   
   FrontierEntry(Node n, FrontierEntry from, PVector end)
   {
@@ -93,7 +93,7 @@ class FrontierEntry{
     if (from != null)
     {
        this.previousFrontier = from;
-       this.distanceToLast = distanceBetween(n.center, from.node.center);
+       this.distanceToLast = distanceBetween(n.center, from.node.center) + from.distanceToLast;
     }
     
     println("SEARCH FRONTIER FOR " + node.id);
@@ -402,11 +402,14 @@ class NavMesh
   ArrayList<PVector> path = new ArrayList<PVector>();
 
   void bake(Map map)
-  {
+  {    
     //reset previous values
     recursionDepth = 0;
     nodes.clear();
     pointAmount = map.walls.size();
+    
+    vertexLookUp.clear();
+    mapVectors.clear();
     
     //create hashmap
     setVertexMap(map);
@@ -424,6 +427,8 @@ class NavMesh
     //some nice printouts
     printAdjacencies();
     println("Reduced map to " + nodes.size() + " polygons");
+    
+    print("Reseting map to have max depth of " + maxDepth);
     
     for(Node n: nodes)
     {
@@ -468,14 +473,22 @@ class NavMesh
       }
       frontier.remove(0);
       frontier.sort((a,b) -> {
-        if (a.getHeuristicSum() > b.getHeuristicSum()) return -1;
-        else if (a.getHeuristicSum() < b.getHeuristicSum()) return 1;
+        if (a.getHeuristicSum() > b.getHeuristicSum()) return 1;
+        else if (a.getHeuristicSum() < b.getHeuristicSum()) return -1;
         else return 0;
       });
       visited.add(front.node);
+      frontierPrintOut(frontier);
+      println("-----------------------");
     }
     
     return traceFrontierPath(destination, startNode, frontier);
+  }
+  
+  void frontierPrintOut(ArrayList<FrontierEntry> frontier) {
+    for (FrontierEntry f: frontier) {
+      println(f.node.id + " (" + f.getHeuristicSum() + ")");
+    }
   }
   
   ArrayList<PVector> traceFrontierPath(PVector destination, Node startNode, ArrayList<FrontierEntry> genPath)
@@ -485,6 +498,7 @@ class NavMesh
     FrontierEntry front = genPath.get(0);
     while (front.node != startNode) {
       PVector midPoint = midPointBetweenNeighbors(front.node, front.previousFrontier.node);
+      //result.add(front.node.center);
       result.add(midPoint);
       front = front.previousFrontier;
     }
