@@ -113,25 +113,36 @@ class Obstacle
 // visible screen (or not too far outside)
 boolean isPointInPolygon(PVector point, ArrayList<Wall> walls)
 {
-   // we create a test point "far away" horizontally
-   PVector testpoint = PVector.add(point, new PVector(width*2, 0));
-   
-   // Then we count how often the line from the given point
-   // to our test point intersects the polygon outline
-   int count = 0;
-   for (Wall w: walls)
+   int inside = 0;
+   int outside = 0;
+   for (int x = 0; x < 5; ++x)
    {
-      if (w.crosses(point, testpoint))
-         count += 1;
+       for (int y = 0; y < 5; ++y)
+       {
+           if (x + y == 0) continue;
+         // we create a test point "far away" horizontally
+         PVector testpoint = PVector.add(point, new PVector(2*width*(x-3), 2*width*(y-2)));
+         
+         // Then we count how often the line from the given point
+         // to our test point intersects the polygon outline
+         int count = 0;
+         for (Wall w: walls)
+         {
+            if (w.crosses(point, testpoint))
+               count += 1;
+         }
+         
+         // If we cross an odd number of times, we started inside
+         // otherwise we started outside the polygon
+         // Intersections alternate between enter and exit,
+         // so if we "know" that the testpoint is outside
+         // and odd number means we exited one more time 
+         // than we entered.
+            if (count%2 == 1) inside++;
+            else outside++;
+       }
    }
-   
-   // If we cross an odd number of times, we started inside
-   // otherwise we started outside the polygon
-   // Intersections alternate between enter and exit,
-   // so if we "know" that the testpoint is outside
-   // and odd number means we exited one more time 
-   // than we entered.
-   return (count%2) == 1;
+   return inside > outside;
 }
 
 class Map
@@ -169,26 +180,6 @@ class Map
       //println("End: " + end);
      
       for (Wall w : walls)
-      {
-         if (w.crosses(start, end)) return true;
-      }
-      return false;
-   }
-  
-   boolean intersectsPolygon(PVector from, PVector to, ArrayList<Wall> polygon)
-   {  
-      //5% of the way from the start
-      PVector start = percentFromPoint(from, to, 0.05);
-      
-      //95% of the way from the start
-      PVector end = percentFromPoint(from, to, 0.95);
-      
-      if (!isReachable(start)) return true;
-     
-      //println("Start: " + start);
-      //println("End: " + end);
-     
-      for (Wall w : polygon)
       {
          if (w.crosses(start, end)) return true;
       }

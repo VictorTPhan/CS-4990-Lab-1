@@ -36,24 +36,24 @@ void mousePressed() {
   if (!map.isReachable(target)) return;
   if (mouseButton == LEFT)
   {
-     
-     if (waypoints.size() == 0)
+     if (!entering_path) //if you haven't made a path yet
      {
-        if (nm.nodes.size() > 0)
+        if (nm.nodes.size() > 0) //if you're on a map
         {
-           println("Following path");
+           println("Pathfinding to single target");
            waypoints = nm.findPath(billy.kinematic.position, target);
            billy.follow(waypoints);
         }
-        else {
+        else { //if you're not on a map
+           println("Simply seeking target");
            billy.seek(target);
         }
      }
-     else
+     else //if you have a path
      {
-        if (nm.nodes.size() > 0)
+        //finish the path
+        if (nm.nodes.size() > 0) //if you're on a map
         {
-          println("Finishing Path");
           PVector startPoint = waypoints.get(waypoints.size() -1);
           ArrayList<PVector> finalRoute = nm.findPath(startPoint, target);
           for (PVector p: finalRoute)
@@ -61,33 +61,50 @@ void mousePressed() {
             waypoints.add(p);
           }
         }
+        else //if you're not on a map
+        {
+          waypoints.add(target);
+        }
+        println("Finishing Path");
         entering_path = false;
+        println(waypoints);
         billy.follow(waypoints);
      }
   }
   else if (mouseButton == RIGHT)
   {
-     if (!entering_path) 
+     if (!entering_path) //if you haven't made a path yet
      {
-        if (nm.nodes.size() > 0)
+        //you will start a path creation process
+        if (nm.nodes.size() > 0) //if you're on a map
         {
-          println("Creating path");
           waypoints = nm.findPath(billy.kinematic.position, target);
-        } else {
-          waypoints.add(target);
-          entering_path = true; 
+        } else { //if you're not on a map
+          waypoints.add(target); 
         }
+        
+        //tell the system that you're entering a path
+        println("Creating path");
+        entering_path = true;
      }
-     else {
-       entering_path = true;
-       if (nm.nodes.size() > 0)
+     else { //if you're currently entering a path
+        if (nm.nodes.size() > 0) //if you're on a map
         {
-          println("Adding to path");
-          waypoints = nm.findPath(billy.kinematic.position, target);
-        } else {
+          if (waypoints.size() == 0) { //if you don't have a path
+            waypoints = nm.findPath(billy.kinematic.position, target);
+          }
+          else { //if you already have a path
+            PVector startPoint = waypoints.get(waypoints.size() -1);
+            ArrayList<PVector> finalRoute = nm.findPath(startPoint, target);
+            for (PVector p: finalRoute)
+            {
+              waypoints.add(p);
+            }
+          }
+        } else { //if you're not on a map
           waypoints.add(target);
-          entering_path = true; 
         }
+        println("Adding to path");
      }
   }
 }

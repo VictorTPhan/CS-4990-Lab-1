@@ -6,21 +6,6 @@ float distanceBetween(PVector A, PVector B)
   return sqrt(pow(A.x - B.x, 2) + pow(A.y - B.y, 2));
 }
 
-/// In this file you will implement your navmesh and pathfinding.
-/*
-SearchFrontier will contain:
-  the node it represents
-  the node it's coming from
-  distance to PVector end
-  distance from last node's center
-  
-  constructor to determine 2 distances
-  method to calculate heuristic value
-  
-  comparison method to compare heuristic values
-
-*/
-/// This node representation is just a suggestion
 class Node
 {
   String id;
