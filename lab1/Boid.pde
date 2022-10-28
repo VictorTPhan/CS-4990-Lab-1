@@ -233,6 +233,7 @@ class Boid
 
       //for the last point, slowing down is much different because you're fully stopping here
       //we'll basically set a marker to be velocityAmount^2, with no braking multiplier as there is no angle to turn from
+      //simply comparing to velocityAmount would cause the boid to slow down earlier than ""naturally"" and it's quite slow
       if (movingToLastPoint())
       {
         if (progress < velocityAmount*velocityAmount) {

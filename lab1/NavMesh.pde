@@ -205,20 +205,17 @@ class NavMesh
     }
     
     //for polyA, just make a polygon from index A to B
-    //when splitting a polygon, one of them will never have a jump in index values between vertices
     for(int i = indexA; i<=indexB; i++)
     {
       //finishes the polygon
       if (i == indexB) {
         polyA.add( new Wall(vertices.get(indexB), vertices.get(indexA)) );
-        //println(indexB + " to " + indexA);
         break;
       }
       
       int nextIndex = i+1;
       if (nextIndex > vertices.size()-1) nextIndex = 0;
       polyA.add( new Wall(vertices.get(i), vertices.get(nextIndex)) );
-      //println(i + " to " + nextIndex);
     }
     
     //for polyB
@@ -260,7 +257,7 @@ class NavMesh
     }
     printOutNodeList();
     
-    //this portion is not necessary for the program to function but it helps when debugging
+    //this portion is not at all necessary for the program to function but it helps when debugging
     recursionDepth++;
     if (recursionDepth == maxDepth) return;
     
@@ -276,9 +273,9 @@ class NavMesh
       //0.[NODE 0A] 
       //1.[NODE 0B]
       //     V
-      //0.[NODE 0B]
-      //1.[NODE 1A]
-      //2.[NODE 1B]
+      //0.[NODE 1A]
+      //1.[NODE 1B]
+      //2.[NODE 0B]
       
       nodes.remove(nodeA);
       correctPolygon(nodeA);
@@ -414,14 +411,10 @@ class NavMesh
     println("Reduced map to " + nodes.size() + " polygons");
     
     print("Reseting map to have max depth of " + maxDepth);
-    
-    for(Node n: nodes)
-    {
-      //println(n.id + ": " + distanceBetween(end, n.center));
-    }
   }
 
-  //precondition: assume nodes is initialized with members
+  //determines what node a PVector is in
+  //assume the nodes list has already been initialized properly
   Node nodeFromPoint(PVector p)
   {
     for (Node n: nodes)
@@ -433,35 +426,42 @@ class NavMesh
     return null;
   }
   
+  //Uses A* to find a path from start to destination
   ArrayList<PVector> findPath(PVector start, PVector destination)
   {
-    //implement A*Star to find a path
-    ArrayList<PVector> result = new ArrayList<PVector>(); //contains the path the boid will take
     ArrayList<FrontierEntry> frontier = new ArrayList<FrontierEntry>(); //contains the frontiers that A*Star uses to find the path
-    ArrayList<Node> visited = new ArrayList<Node>(); //contains nodes that we have already visited, so the boid doesn't go backwards
-    Node startNode = nodeFromPoint(start);
+    ArrayList<Node> visited = new ArrayList<Node>(); //contains nodes that we have already visited
+    Node startNode = nodeFromPoint(start); //contains the node the start is at
     Node finalNode = nodeFromPoint(destination); //contains the node the destination is at 
     
+    //we start by adding the first node to our frontier
     FrontierEntry s = new FrontierEntry(startNode, null, finalNode.getCenter());
     frontier.add(s);
     visited.add(frontier.get(0).node);
     
+    //then, until the first item is the final node...
     while (frontier.get(0).node != finalNode)
     {
       FrontierEntry front = frontier.get(0);
+      //get all the neighbors of the first frontier
       for (Node neighbor: front.node.neighbors)
       {
+        //if we haven't visited the neighbor, add it to the frontier
         if (!visited.contains(neighbor))
         {
           frontier.add(new FrontierEntry(neighbor, front, finalNode.getCenter())); 
         }
       }
+      //first in frontier no longer required
       frontier.remove(0);
+      //sort via lambda function
+      //shorter paths have priority
       frontier.sort((a,b) -> {
         if (a.getHeuristicSum() > b.getHeuristicSum()) return 1;
         else if (a.getHeuristicSum() < b.getHeuristicSum()) return -1;
         else return 0;
       });
+      //add the removed node to visited list
       visited.add(front.node);
       frontierPrintOut(frontier);
       println("-----------------------");
@@ -476,17 +476,25 @@ class NavMesh
     }
   }
   
+  //given a list of frontiers, create a PVector path from the start to destination
   ArrayList<PVector> traceFrontierPath(PVector destination, Node startNode, ArrayList<FrontierEntry> genPath)
   {
+    //we're going to build this list up from the end and then reverse it.
+    
     ArrayList<PVector> result = new ArrayList<PVector>();
+    //add the end
     result.add(destination);
     FrontierEntry front = genPath.get(0);
     while (front.node != startNode) {
+      //add the midpoint from the last frontier that you backtracked to
       PVector midPoint = midPointBetweenNeighbors(front.node, front.previousFrontier.node);
-      //result.add(front.node.center);
       result.add(midPoint);
+      
+      //backtrack to previous frontier
       front = front.previousFrontier;
     }
+    
+    //reverse everything, now it's beginning to end!
     Collections.reverse(result);
     return result;
   }
@@ -510,17 +518,6 @@ class NavMesh
       {
           line(w.start.x, w.start.y, w.end.x, w.end.y);
       }
-      PVector center = n.getCenter();
-      text(n.id + "", center.x, center.y); 
-      for (Node nb: n.neighbors)
-      {
-        //line(center.x, center.y, nb.getCenter().x, nb.getCenter().y);
-      }
-    }
-    for (int i = 0; i<path.size()-1; i++)
-    {
-      int j = i+1;
-      line(path.get(i).x, path.get(i).y, path.get(j).x, path.get(j).y);
     }
   }
 }
