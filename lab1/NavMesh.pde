@@ -191,7 +191,7 @@ class NavMesh
   }
 
   //assume indexA < indexB
-  void splitPolygon(Node node, int indexA, int indexB, int convexPoint)
+  void splitPolygon(Node node, int indexA, int indexB, int reflexivePoint)
   {
     //first, create 2 polygons to represent our splitted polygons
     ArrayList<Wall> polyA = new ArrayList<Wall>();
@@ -249,7 +249,7 @@ class NavMesh
     nodes.add(nodeB);
     
     //just some debugging
-    println("Convex Point Number: " + convexPoint);
+    println("reflexive Point Number: " + reflexivePoint);
     println("");
     for(int k = 0; k<nodes.size(); k++)
     {
@@ -313,7 +313,7 @@ class NavMesh
   }
   
   //given a reflexive index, find a vertex that you can go to without intersection another wall 
-  int getIndexOfConnectingVertex(ArrayList<Wall> polygon, int convexIndex)
+  int getIndexOfConnectingVertex(ArrayList<Wall> polygon, int reflexiveIndex)
   {
     //you need the PVectors for this one
     ArrayList<PVector> vertices = new ArrayList<PVector>();
@@ -323,19 +323,19 @@ class NavMesh
     }
     
     //our "bad" point
-    PVector pointAtIndex = vertices.get(convexIndex);
+    PVector pointAtIndex = vertices.get(reflexiveIndex);
 
     //we don't need to consider the vertex's neighbors since they obviously can't be connected to
-    int nextIndex = convexIndex + 1;
+    int nextIndex = reflexiveIndex + 1;
     if (nextIndex >= vertices.size()) nextIndex = 0;
 
-    int lastIndex = convexIndex - 1;
+    int lastIndex = reflexiveIndex - 1;
     if (lastIndex < 0) lastIndex = vertices.size() - 1;
 
     for (int potentialConnecting = vertices.size()-1; potentialConnecting>=0; potentialConnecting--)
     {
       //skip neighbors and the bad point
-      if (potentialConnecting == nextIndex || potentialConnecting == convexIndex || potentialConnecting == lastIndex) continue;
+      if (potentialConnecting == nextIndex || potentialConnecting == reflexiveIndex || potentialConnecting == lastIndex) continue;
 
       PVector potentialConnectingPoint = vertices.get(potentialConnecting);
       
@@ -354,17 +354,17 @@ class NavMesh
   //the idea is that correctPolygon will work recursively. With every recursive iteration it will add 2 more polygons to the map.
   void correctPolygon(Node node)
   {
-    int convexIndex = getIndexOfBadVertex(node.polygon);
-    if (convexIndex == -1) return;
-    else println("      convex index: " + convexIndex);
+    int reflexiveIndex = getIndexOfBadVertex(node.polygon);
+    if (reflexiveIndex == -1) return;
+    else println("      reflexive index: " + reflexiveIndex);
     
-    int connectingIndex = getIndexOfConnectingVertex(node.polygon, convexIndex);
+    int connectingIndex = getIndexOfConnectingVertex(node.polygon, reflexiveIndex);
     if (connectingIndex == -1) return;
     else println("      connecting index: " + connectingIndex);
     
     //splitPolygon will create 2 polygons by iterating through the vertex list in numerical order
-    //if the convexIndex is 5, and the connecting index is 3, it's going to break
-    splitPolygon(node, min(convexIndex, connectingIndex), max(convexIndex, connectingIndex), convexIndex);
+    //if the reflexiveIndex is 5, and the connecting index is 3, it's going to break
+    splitPolygon(node, min(reflexiveIndex, connectingIndex), max(reflexiveIndex, connectingIndex), reflexiveIndex);
   }
 
   //creates a hashmap with key PVector and value Integer
@@ -507,6 +507,8 @@ class NavMesh
 
   void draw()
   {
+    strokeWeight(1);
+    stroke(255,0,0);
     for(int i = 0; i<map.walls.size();i++)
     {
       text(i,map.walls.get(i).start.x+10, map.walls.get(i).start.y+10);

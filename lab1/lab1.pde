@@ -128,19 +128,22 @@ void keyPressed()
        mapnr = -1;
        nm.bake(map);
     }
-    if (key == 'p')
+    if (DEBUG)
     {
-      nm.maxDepth++;
-      nm.bake(map);
-    }
-    if (key == 'i') {
-      nm.maxDepth = 1;
-      nm.bake(map);
-    }
-    if (key == 'o')
-    {
-      nm.maxDepth--;
-      nm.bake(map);
+      if (key == 'p')
+      {
+        nm.maxDepth++;
+        nm.bake(map);
+      }
+      if (key == 'i') {
+        nm.maxDepth = 1;
+        nm.bake(map);
+      }
+      if (key == 'o')
+      {
+        nm.maxDepth--;
+        nm.bake(map);
+      }
     }
     else if (key == 'n')
     {
@@ -239,8 +242,11 @@ void draw() {
       text("W - Show waypoints while moving", width*0.25+40, height*0.25 + 130);
       text("F - Enable/disable flocking", width*0.25+40, height*0.25 + 150);
       text("H - This screen", width*0.25+40, height*0.25 + 170);
+      text("I - Reset Navmesh Recursion", width*0.25+40, height*0.25+190);
+      text("P - Increase Navmesh Recursion", width*0.25+40, height*0.25+210);
+      text("O - Decrease Navmesh Recursion", width*0.25+40, height*0.25+230);
       
-      text("Press any key to close", width*0.5 - 80, height*0.75 - 80);
+      text("Press any key to close", width*0.5 - 80, height*0.75-10);
       textSize(12);
   }
   

@@ -127,11 +127,14 @@ class Boid
   {
     text(kinematic.getHeading(), kinematic.position.x, kinematic.position.y + 20);
 
-    if (points != null) {
-      for (int i = 0; i<points.size(); i++)
-      {
-        text(i, points.get(i).x + 10, points.get(i).y + 10);
-      }
+    if (DEBUG)
+    {
+        if (points != null) {
+          for (int i = 0; i<points.size(); i++)
+          {
+            text(i, points.get(i).x + 10, points.get(i).y + 10);
+          }
+        }
     }
     
     if (finished) { //if it has completed following its path
@@ -247,18 +250,21 @@ class Boid
       drawAngledLine(kinematic.getHeading(), "heading");
       drawAngledLine(targetRadian, "target angle");
 
-      text("Shortest Radian Distance: " + shortestRadianDistance + TWO_PI, kinematic.position.x + 50, kinematic.position.y + 20);
-      text("Rotational Velocity: " + kinematic.rotational_velocity, kinematic.position.x + 50, kinematic.position.y + 35);
-      text("Rotation: " + rotation, kinematic.position.x + 50, kinematic.position.y + 50);
-      text("Clockwise: " + clockwise, kinematic.position.x + 50, kinematic.position.y + 65);
-      text("Approaching: " + approaching, kinematic.position.x + 50, kinematic.position.y + 80);
-      text("Positional Velocity: " + speed, kinematic.position.x + 50, kinematic.position.y + 95);
-      text("Progress: " + progress, kinematic.position.x + 50, kinematic.position.y + 110);
-      text("Velocity Amount: " + velocityAmount, kinematic.position.x + 50, kinematic.position.y +125);
-      text("Target to Boid: " + targetToBoid, kinematic.position.x + 50, kinematic.position.y + 140);
-      text("Angle to Next Point: " + angleToNextPoint, kinematic.position.x + 50, kinematic.position.y + 155);
-      text("Kinematic Velocity: " + kinematic.speed, kinematic.position.x + 50, kinematic.position.y + 170);
-      text("Braking Multiplier: " + brakeMultiplier, kinematic.position.x + 50, kinematic.position.y + 185);
+      if (DEBUG)
+      {
+        text("Shortest Radian Distance: " + shortestRadianDistance + TWO_PI, kinematic.position.x + 50, kinematic.position.y + 20);
+        text("Rotational Velocity: " + kinematic.rotational_velocity, kinematic.position.x + 50, kinematic.position.y + 35);
+        text("Rotation: " + rotation, kinematic.position.x + 50, kinematic.position.y + 50);
+        text("Clockwise: " + clockwise, kinematic.position.x + 50, kinematic.position.y + 65);
+        text("Approaching: " + approaching, kinematic.position.x + 50, kinematic.position.y + 80);
+        text("Positional Velocity: " + speed, kinematic.position.x + 50, kinematic.position.y + 95);
+        text("Progress: " + progress, kinematic.position.x + 50, kinematic.position.y + 110);
+        text("Velocity Amount: " + velocityAmount, kinematic.position.x + 50, kinematic.position.y +125);
+        text("Target to Boid: " + targetToBoid, kinematic.position.x + 50, kinematic.position.y + 140);
+        text("Angle to Next Point: " + angleToNextPoint, kinematic.position.x + 50, kinematic.position.y + 155);
+        text("Kinematic Velocity: " + kinematic.speed, kinematic.position.x + 50, kinematic.position.y + 170);
+        text("Braking Multiplier: " + brakeMultiplier, kinematic.position.x + 50, kinematic.position.y + 185);
+      }
     }
 
     // place crumbs, do not change
